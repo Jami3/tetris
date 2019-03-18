@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+    <link rel="stylesheet" href="main.css">
+  </head>
+  <body>
+
+    <div id="highscore">
+
+    </div>
+    <div id="container">
+      <div id="score">
+
+      </div>
+      <canvas id="tetris" width="384" height="640"></canvas>
+      <audio id="theme" src="sounds/theme.mp3" loop></audio>
+
+
+    </div>
+    <div id="musicControls">
+      <span>Music</span><br>
+      <button type="button" id="play" onclick="musicToggle()">Play</button>
+    </div>
+
+    <audio id="hit" src="sounds/hit.mp3"></audio>
+    <audio id="rotate" src="sounds/rotate.mp3"></audio>
+    <audio id="remove" src="sounds/its_a_cake.wav"></audio>
+    <audio id="remove4" src="sounds/remove4.mp3"></audio>
+    <script src="tetris.js" charset="utf-8"></script>
+
+  </body>
+</html>

@@ -1,0 +1,18 @@
+#container{
+  margin: auto;
+  display: block;
+  width: 480px;
+  text-align: right;
+  font-size: 40px;
+}
+#musicControls{
+  position: absolute;
+  top: 50%;
+  left: 20%;
+}
+#highscore{
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  font-size: 40px;
+}
