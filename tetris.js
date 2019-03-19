@@ -1,6 +1,7 @@
 const canvas = document.getElementById("tetris");
 const context = canvas.getContext("2d");
 
+
 context.scale(32,32);
 
 function arenaSweep(){
@@ -19,15 +20,34 @@ function arenaSweep(){
     arena.unshift(row);
     ++y;
 
-    player.score += rowCount * 10;
-    rowCount *= 2;
-    sound = true;
+
+    rowCount ++;
+
+    let speed = 1000 / dropInterval;
+    player.score += Math.floor(Math.pow(rowCount,speed) * 1000);
     //console.log("rowCount: " + rowCount);
   }
-  if(rowCount === 16){
+  if(rowCount === 5){
     document.getElementById("remove4").play();
-  }else if(sound){
+  }else if(rowCount === 3){
+    document.getElementById("remove2").play();
+  }else if (rowCount == 2){
     document.getElementById("remove").play();
+  }
+  if(player.score >= 1500000){
+    dropInterval = 50;
+  }else if(player.score >= 800000){
+    dropInterval = 100;
+  }else if(player.score >= 300000){
+    dropInterval = 200;
+  }else if(player.score >= 100000){
+    dropInterval = 300;
+  }else if(player.score >= 50000){
+    dropInterval = 500;
+  }else if(player.score >= 10000){
+    dropInterval = 800;
+  }else{
+    dropInterval = 1000;
   }
 }
 
@@ -38,12 +58,72 @@ const matrix = [
   [0,1,0]
 ];
 
+let heldPiece;
+
+function holdPiece(){
+let temp;
+  if(typeof(heldPiece) == "undefined"){
+    heldPiece = JSON.parse(JSON.stringify(player.matrix));
+    player.matrix = nextPieces.shift();
+
+  }else{
+    temp = JSON.parse(JSON.stringify(player.matrix));
+    player.matrix = JSON.parse(JSON.stringify(heldPiece));
+    heldPiece = temp;
+  }
+
+}
+
 function draw() {
-  context.fillStyle = "#000";
+  context.fillStyle = "black";
   context.fillRect(0,0,canvas.width,canvas.height);
   drawMatrix(arena,{x:0,y:0});
+  context.globalAlpha = 0.4;
+  drawGhost(player);
+  context.globalAlpha = 1;
   drawMatrix(player.matrix, player.pos);
+  drawNext();
+  drawHold();
+
 }
+function drawHold(){
+  context.fillStyle = "white";
+  context.font = "1px serif"
+  context.fillText("Hold",16.2,2);
+    context.fillStyle = "black";
+  context.fillRect(16,3,3,4);
+  if(typeof(heldPiece) !== "undefined"){
+    //console.log("DRAWING HELD");
+    drawMatrix(heldPiece,{x:16,y:3});
+  }
+}
+function drawNext(){
+  context.fillStyle = "grey";
+  context.fillRect(12,0,10,20);
+  context.fillStyle = "white";
+  context.font = "1px serif"
+  context.fillText("Next",12.8,2);
+  for(let i = 0; i < nextPieces.length;i++){
+    let width = nextPieces[i].length;
+    //console.log(width);
+    drawMatrix(nextPieces[i],{x: 12.4,y:i*4 + 4});
+  }
+
+}
+
+function drawGhost(player){
+  let ghost = JSON.parse(JSON.stringify(player));
+
+  while(!collide(arena,ghost)){
+    ghost.pos.y++;
+  }
+  ghost.pos.y--;
+
+
+  drawMatrix(ghost.matrix,ghost.pos);
+}
+
+
 
 function createMatrix(w,h){
   const matrix = [];
@@ -97,19 +177,29 @@ function createPiece(type){
     [0,0,0]
   ];
 }
-console.log("TYPE: " + type);
+//console.log("TYPE: " + type);
 }
 
 
 function drawMatrix(matrix, offset){
+
   matrix.forEach((row,y)=>{
     row.forEach((value,x)=>{
       if(value !== 0){
         context.fillStyle = colors[value];
-        context.fillRect(
+        /*
+        let img = imgs[value % imgs.length];
+        context.drawImage(
+          img,
           x + offset.x,
           y + offset.y,
           0.9, 0.9);
+        */
+          context.fillRect(
+            x + offset.x,
+            y + offset.y,
+            0.9, 0.9);
+
       }
     })
   });
@@ -125,6 +215,15 @@ function playerDrop(){
     updateScore();
   }
   dropCounter = 0;
+}
+
+function playerHardDrop(){
+  while(!collide(arena,player)){
+    player.pos.y++;
+  }
+  player.pos.y--;
+  playerDrop();
+
 }
 
 
@@ -143,6 +242,7 @@ function update(time = 0){
 
 
   draw();
+
   requestAnimationFrame(update);
 }
 let highscore = 0;
@@ -164,6 +264,15 @@ const colors = [
   'cyan',
   'green',
   'red',
+  'grey'
+]
+let jamie = document.getElementById("imgJamie");
+let koi = document.getElementById("imgKoi");
+let josh = document.getElementById("imgJosh");
+const imgs = [
+  jamie,
+  koi,
+  josh
 ]
 
 
@@ -216,11 +325,16 @@ function playerRotate(dir){
     }
   }
 }
+let nextPieces = [];
+const pieces = "ILJOTSZ";
+for(let i = 0; i < 5; i++){
+  nextPieces.push(createPiece(pieces[Math.floor(pieces.length * Math.random())]));
+}
 
 function playerReset(){
-  const pieces = "ILJOTSZ";
   let random = Math.floor(pieces.length * Math.random());
-  player.matrix = createPiece(pieces[random]);
+  nextPieces.push(createPiece(pieces[random]));
+  player.matrix = nextPieces.shift();
   player.pos.y = 0;
   player.pos.x = (arena[0].length / 2 | 0) -
                  (player.matrix[0].length / 2 | 0);
@@ -274,12 +388,9 @@ function musicToggle(){
 
 
 document.addEventListener("keydown",event=>{
-  //console.log(event);
   if(event.keyCode === 39){
     playerMove(1);
-    //player.pos.x++;
   }else if(event.keyCode === 37){
-    //player.pos.x--;
     playerMove(-1);
   }else if(event.keyCode === 40){
     playerDrop();
@@ -287,14 +398,16 @@ document.addEventListener("keydown",event=>{
     playerRotate(-1);
   }else if(event.keyCode === 87){
     playerRotate(1);
+  }else if(event.keyCode === 32){
+    playerHardDrop();
+  }else if(event.keyCode === 16){
+    holdPiece();
   }
 });
 
 document.addEventListener("DOMContentLoaded", function() {
   setTimeout(()=>{
     document.getElementById("theme").volume = 0.2;
-    //document.getElementById("theme").play();
-    //console.log("play song");
   },3000);
 
 });
